@@ -1,0 +1,74 @@
+import sqlite3 
+import uuid
+from datetime import datetime
+
+def add_document(title, author, department, classification, lifecycle_stage, file_path=None):
+	# step 1: generate id
+	doc_id = str(uuid.uuid4())
+
+	# step 2: set version
+	version = 1
+		
+	#step 3 upload date
+	upload_date = datetime.now().isoformat()
+	
+	#step 4: set soft delete flag
+	is_deleted = 0
+	
+	success = insert_into_db(doc_id, version, title, author, department,
+								classification, lifecycle_stage, is_deleted,
+								upload_date)
+	
+	if not success:
+		latest_version = query_latest_version(doc_id)
+		
+		version = latest_version + 1
+		
+		success = insert_into_db(doc_id, version, title, author, department,
+									classification, lifecycle_stage, is_deleted,
+									upload_date)		
+									
+		if success:
+			return doc_id, version
+		else:
+			raise Error("Unable to insert document after retry")
+			
+import sqlite3
+
+conn = sqlite3.connect("ecm_lite_database.db")
+cursor = conn.cursor()
+
+sql = "INSERT INTO documents (id, version, title, author, upload_date, classification," 
+		+	"department, lifecycle_stage, is_deleted, file_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+try :
+	success  = cursor.execute(sql, (id, version, title, author, upload_date, classification, department, lifecycle_stage, is_deleted, file_path))
+	
+	if not success:
+		latest_version = query_latest_version(doc_id)
+		version = latest_version + 1
+		
+except sqlite3.IntegrityError as e:
+	print("Integrity error:", e)
+
+conn.commit()
+
+
+def query_latest_version(doc_id):
+
+conn = sqlite3.connect("ecm_lite_database.db")
+cursor = conn.cursor()
+
+sql = "SELECT version FROM documents WHERE id = ? ORDER BY version DESC LIMIT 1"
+cursor.execute(sql, (doc_id))
+
+row = cursor.fetchone()
+if row:
+	return row[0]
+else:
+	return 0
+	
+	
+function add_document(title, author, department, classification, lifecycle_stage, file_path=None):
+	conn = sqlite3.connect("ecm_lite_database.db")
+	cursor = conn.cursor()
+	
