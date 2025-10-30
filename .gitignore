@@ -1,0 +1,4 @@
+ecm_lite_database.db
+/uploads/
+__pycache__/
+*.pyc
